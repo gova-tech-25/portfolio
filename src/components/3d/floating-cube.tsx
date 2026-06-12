@@ -18,10 +18,23 @@ function getParticlePositions(count: number) {
 
 const particlePositions = getParticlePositions(200);
 
+const SECTION_SCALES: Record<string, number> = {
+  hero: 1.8,
+  about: 1.1,
+  skills: 1.4,
+  experience: 0.9,
+  education: 1.2,
+  projects: 0.7,
+  certifications: 1.0,
+  achievements: 1.1,
+  contact: 1.6,
+};
+
 function Cube() {
   const meshRef = useRef<THREE.Mesh>(null);
   const mouse = useMousePosition();
   const target = useRef({ x: 0, y: 0 });
+  const currentScale = useRef(1.8);
 
   useFrame(() => {
     if (!meshRef.current) return;
@@ -33,12 +46,43 @@ function Cube() {
     meshRef.current.rotation.y += 0.008;
     meshRef.current.position.x = target.current.x * 0.3;
     meshRef.current.position.y = target.current.y * 0.3;
+
+    // Smooth scroll-based scale scaling
+    let activeSec = "hero";
+    if (typeof window !== "undefined") {
+      const scrollPosition = window.scrollY + window.innerHeight / 3;
+      const sections = [
+        "hero",
+        "about",
+        "skills",
+        "experience",
+        "education",
+        "projects",
+        "certifications",
+        "achievements",
+        "contact",
+      ];
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            activeSec = section;
+          }
+        }
+      }
+    }
+
+    const baseTarget = SECTION_SCALES[activeSec] || 1.8;
+    currentScale.current += (baseTarget - currentScale.current) * 0.05;
+    meshRef.current.scale.setScalar(currentScale.current);
   });
 
   return (
     <Float speed={2} rotationIntensity={0.3} floatIntensity={1.5}>
       <mesh ref={meshRef} scale={1.8}>
-        <icosahedronGeometry args={[1, 1]} />
+        <icosahedronGeometry args={[1, 6]} />
         <MeshDistortMaterial
           color="#6366f1"
           emissive="#6366f1"

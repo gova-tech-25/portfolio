@@ -38,7 +38,15 @@ export function CursorTrail() {
     }
 
     let particles: Particle[] = [];
-    const mouse = { x: 0, y: 0, lastX: 0, lastY: 0, active: false };
+    const mouse = {
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+      lastX: 0,
+      lastY: 0,
+      active: false,
+    };
 
     // Dynamic color palette based on theme
     const colors = [
@@ -58,78 +66,20 @@ export function CursorTrail() {
     window.addEventListener("resize", resizeCanvas);
 
     const handleMouseMove = (e: MouseEvent) => {
-      const currentX = e.clientX;
-      const currentY = e.clientY;
-
-      if (!mouse.active) {
-        mouse.lastX = currentX;
-        mouse.lastY = currentY;
-        mouse.active = true;
-      }
-
-      mouse.x = currentX;
-      mouse.y = currentY;
-
-      const dx = mouse.x - mouse.lastX;
-      const dy = mouse.y - mouse.lastY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance > 1) {
-        // Create particles along the path for smooth drawing
-        const steps = Math.min(Math.floor(distance / 2), 8);
-        for (let i = 0; i <= steps; i++) {
-          const ratio = steps === 0 ? 1 : i / steps;
-          const px = mouse.lastX + dx * ratio;
-          const py = mouse.lastY + dy * ratio;
-
-          // Main comet glow particle
-          const color = colors[Math.floor(Math.random() * colors.length)];
-          const size = Math.random() * 3 + 1.5;
-          const life = Math.random() * 20 + 20;
-
-          particles.push({
-            x: px,
-            y: py,
-            // Drag effect: move opposite to cursor velocity + random dispersion
-            vx: -dx * 0.1 + (Math.random() - 0.5) * 0.5,
-            vy: -dy * 0.1 + (Math.random() - 0.5) * 0.5,
-            alpha: 1.0,
-            maxLife: life,
-            life: life,
-            size: size,
-            color: color,
-            isSparkle: false,
-          });
-
-          // Occasional sparkle particle
-          if (Math.random() > 0.6) {
-            const sparkleLife = Math.random() * 30 + 15;
-            particles.push({
-              x: px + (Math.random() - 0.5) * 6,
-              y: py + (Math.random() - 0.5) * 6,
-              // Sparkles shoot outwards slightly more
-              vx: -dx * 0.15 + (Math.random() - 0.5) * 1.5,
-              vy: -dy * 0.15 + (Math.random() - 0.5) * 1.5,
-              alpha: 1.0,
-              maxLife: sparkleLife,
-              life: sparkleLife,
-              size: Math.random() * 1.5 + 0.5,
-              color: "rgba(255, 255, 255, ", // white sparkle
-              isSparkle: true,
-            });
-          }
-        }
-      }
-
-      mouse.lastX = mouse.x;
-      mouse.lastY = mouse.y;
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+      mouse.active = true;
     };
 
     const handleMouseEnter = (e: MouseEvent) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      mouse.lastX = mouse.x;
-      mouse.lastY = mouse.y;
+      if (!mouse.active) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        mouse.targetX = e.clientX;
+        mouse.targetY = e.clientY;
+        mouse.lastX = e.clientX;
+        mouse.lastY = e.clientY;
+      }
       mouse.active = true;
     };
 
@@ -146,22 +96,76 @@ export function CursorTrail() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      if (mouse.active) {
+        // Ease / Lerp mouse coordinate updates (creates a trailing lag)
+        const ease = 0.08;
+        mouse.x += (mouse.targetX - mouse.x) * ease;
+        mouse.y += (mouse.targetY - mouse.y) * ease;
+
+        const dx = mouse.x - mouse.lastX;
+        const dy = mouse.y - mouse.lastY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 0.5) {
+          // Create particles along the eased path
+          const steps = Math.min(Math.floor(distance / 2), 8);
+          for (let i = 0; i <= steps; i++) {
+            const ratio = steps === 0 ? 1 : i / steps;
+            const px = mouse.lastX + dx * ratio;
+            const py = mouse.lastY + dy * ratio;
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const size = Math.random() * 3 + 1.5;
+            const life = Math.random() * 20 + 20;
+
+            particles.push({
+              x: px,
+              y: py,
+              vx: -dx * 0.12 + (Math.random() - 0.5) * 0.5,
+              vy: -dy * 0.12 + (Math.random() - 0.5) * 0.5,
+              alpha: 1.0,
+              maxLife: life,
+              life: life,
+              size: size,
+              color: color,
+              isSparkle: false,
+            });
+
+            if (Math.random() > 0.6) {
+              const sparkleLife = Math.random() * 30 + 15;
+              particles.push({
+                x: px + (Math.random() - 0.5) * 6,
+                y: py + (Math.random() - 0.5) * 6,
+                vx: -dx * 0.18 + (Math.random() - 0.5) * 1.5,
+                vy: -dy * 0.18 + (Math.random() - 0.5) * 1.5,
+                alpha: 1.0,
+                maxLife: sparkleLife,
+                life: sparkleLife,
+                size: Math.random() * 1.5 + 0.5,
+                color: "rgba(255, 255, 255, ",
+                isSparkle: true,
+              });
+            }
+          }
+        }
+
+        mouse.lastX = mouse.x;
+        mouse.lastY = mouse.y;
+      }
+
       // Update and draw particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         
-        // Apply physics
         p.x += p.vx;
         p.y += p.vy;
         
-        // Slow deceleration (friction)
         p.vx *= 0.98;
         p.vy *= 0.98;
 
         p.life--;
         p.alpha = p.life / p.maxLife;
 
-        // Remove dead particles
         if (p.life <= 0) {
           particles.splice(i, 1);
           continue;
@@ -200,7 +204,7 @@ export function CursorTrail() {
         
         ctx.arc(mouse.x, mouse.y, 30, 0, Math.PI * 2);
         ctx.fillStyle = glowGrad;
-        ctx.shadowBlur = 0; // turn off shadow for performance
+        ctx.shadowBlur = 0;
         ctx.fill();
       }
 
