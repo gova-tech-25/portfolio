@@ -6,6 +6,8 @@ import { BackToTop } from "@/components/navigation/back-to-top";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LenisProvider } from "@/components/providers/lenis-provider";
 import { GradientBlobs } from "@/components/ui/gradient-blob";
+import { FloatingCube } from "@/components/3d/floating-cube";
+import { CursorTrail } from "@/components/ui/cursor-trail";
 import { personalInfo } from "@/lib/resume-data";
 
 const geistSans = Geist({
@@ -53,6 +55,8 @@ export default function RootLayout({
         <ThemeProvider>
           <LenisProvider>
             <GradientBlobs />
+            <FloatingCube />
+            <CursorTrail />
             <Navbar />
             <main className="relative">{children}</main>
             <BackToTop />

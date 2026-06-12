@@ -40,7 +40,7 @@ export function CursorTrail() {
     let particles: Particle[] = [];
     const mouse = { x: 0, y: 0, lastX: 0, lastY: 0, active: false };
 
-    // Dynamic color palette based on Tailwind CSS/design theme
+    // Dynamic color palette based on theme
     const colors = [
       "rgba(168, 85, 247, ", // purple-500
       "rgba(99, 102, 241, ", // indigo-500
@@ -50,23 +50,16 @@ export function CursorTrail() {
     ];
 
     const resizeCanvas = () => {
-      const parent = canvas.parentElement;
-      if (parent) {
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight;
-      }
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
 
     resizeCanvas();
-    const resizeObserver = new ResizeObserver(() => resizeCanvas());
-    if (canvas.parentElement) {
-      resizeObserver.observe(canvas.parentElement);
-    }
+    window.addEventListener("resize", resizeCanvas);
 
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const currentY = e.clientY - rect.top;
+      const currentX = e.clientX;
+      const currentY = e.clientY;
 
       if (!mouse.active) {
         mouse.lastX = currentX;
@@ -133,9 +126,8 @@ export function CursorTrail() {
     };
 
     const handleMouseEnter = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
       mouse.lastX = mouse.x;
       mouse.lastY = mouse.y;
       mouse.active = true;
@@ -145,12 +137,9 @@ export function CursorTrail() {
       mouse.active = false;
     };
 
-    const parent = canvas.parentElement;
-    if (parent) {
-      parent.addEventListener("mousemove", handleMouseMove);
-      parent.addEventListener("mouseenter", handleMouseEnter);
-      parent.addEventListener("mouseleave", handleMouseLeave);
-    }
+    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseenter", handleMouseEnter);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     let animationId: number;
 
@@ -180,18 +169,14 @@ export function CursorTrail() {
 
         ctx.beginPath();
         if (p.isSparkle) {
-          // Draw star-like shapes or small squares/diamonds for sparkles
           ctx.rect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
           ctx.fillStyle = `${p.color}${p.alpha})`;
           ctx.shadowBlur = p.size * 2;
           ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
           ctx.fill();
         } else {
-          // Draw standard glow particle
           ctx.arc(p.x, p.y, p.size * p.alpha, 0, Math.PI * 2);
           ctx.fillStyle = `${p.color}${p.alpha * 0.8})`;
-          
-          // Outer glow
           ctx.shadowBlur = p.size * 3;
           ctx.shadowColor = `${p.color}0.6)`;
           ctx.fill();
@@ -219,7 +204,6 @@ export function CursorTrail() {
         ctx.fill();
       }
 
-      // Limit particle count to avoid slowdowns
       if (particles.length > 250) {
         particles.splice(0, particles.length - 250);
       }
@@ -230,12 +214,10 @@ export function CursorTrail() {
     animate();
 
     return () => {
-      if (parent) {
-        parent.removeEventListener("mousemove", handleMouseMove);
-        parent.removeEventListener("mouseenter", handleMouseEnter);
-        parent.removeEventListener("mouseleave", handleMouseLeave);
-      }
-      resizeObserver.disconnect();
+      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseenter", handleMouseEnter);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       cancelAnimationFrame(animationId);
     };
   }, []);
@@ -243,7 +225,7 @@ export function CursorTrail() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-10"
+      className="fixed inset-0 pointer-events-none z-[9999]"
       style={{ mixBlendMode: "screen" }}
     />
   );

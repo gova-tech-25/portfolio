@@ -108,7 +108,7 @@ function Rings() {
 
 export function FloatingCube() {
   return (
-    <div className="absolute inset-0">
+    <div className="fixed inset-0 pointer-events-none -z-10">
       <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 6], fov: 45 }}>
         <PerspectiveCamera makeDefault position={[0, 0, 6]} fov={45} />
         <ambientLight intensity={0.5} />
