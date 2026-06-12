@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
 import { FloatingCube } from "@/components/3d/floating-cube";
+import { CursorTrail } from "@/components/ui/cursor-trail";
 import { Button } from "@/components/ui/button";
 import { personalInfo } from "@/lib/resume-data";
 import { scrollToSection } from "@/lib/utils";
@@ -14,6 +15,7 @@ export function Hero() {
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
     >
       <FloatingCube />
+      <CursorTrail />
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         <motion.div
